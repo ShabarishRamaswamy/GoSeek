@@ -12,7 +12,6 @@ import (
 func main() {
 	wd, _ := os.Getwd()
 	fmt.Println("Serving Static files from: ", filepath.Join(wd, "assets"))
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(filepath.Join(wd, "assets")))))
 
 	r := routers.InitializeAllRoutes(wd)
 	http.ListenAndServe(":8000", r)

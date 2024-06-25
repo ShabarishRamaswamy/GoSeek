@@ -19,7 +19,7 @@ func InitializeAllRoutes(wd string) *mux.Router {
 	fmt.Println("Initializing Routers")
 	r := mux.NewRouter()
 	r.HandleFunc("/", sayHi)
-	// r.HandleFunc("/assets/{path}", printOnly)
+	r.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 	return r
 }
 
@@ -33,8 +33,3 @@ func sayHi(w http.ResponseWriter, r *http.Request) {
 	hiTemplate := template.Must(template.ParseFiles(indexFilePath))
 	hiTemplate.Execute(w, vp)
 }
-
-// func printOnly(w http.ResponseWriter, r *http.Request) {
-// 	fmt.Println("Requested: ", r.RequestURI)
-// 	w.con
-// }
