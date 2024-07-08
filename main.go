@@ -14,5 +14,5 @@ func main() {
 	fmt.Println("Serving Static files from: ", filepath.Join(wd, "assets"))
 
 	r := routers.InitializeAllRoutes(wd)
-	http.ListenAndServe(":8000", r)
+	http.ListenAndServe("localhost:8000", r)
 }
