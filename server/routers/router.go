@@ -10,6 +10,7 @@ import (
 	"strings"
 	"text/template"
 
+	speedtest "github.com/ShabarishRamaswamy/GoSeek/server/speedTest"
 	"github.com/gorilla/mux"
 )
 
@@ -22,11 +23,12 @@ func InitializeAllRoutes(wd string) *mux.Router {
 	fmt.Println("Initializing Routers")
 	r := mux.NewRouter()
 	r.HandleFunc("/", indexPage)
+	r.HandleFunc("/speedTest/{category}", speedTest)
 	r.HandleFunc("/default", defaultImplementation)
 	r.HandleFunc("/custom", customImeplementation)
 	r.PathPrefix("/serve/").HandlerFunc(serveCustom)
 
-	r.Use(loggingMiddleware)
+	// r.Use(LoggingMiddleware)
 	r.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 	return r
 }
@@ -115,11 +117,25 @@ func serveCustom(w http.ResponseWriter, r *http.Request) {
 	io.CopyN(w, videoFile, int64(vidSeekSize))
 }
 
-func loggingMiddleware(next http.Handler) http.Handler {
+func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Do stuff here
 		fmt.Printf("\n\nURL: %s\nReq: %+v\n\n", r.RequestURI, r)
 		// Call the next handler, which can be another middleware in the chain, or the final handler.
 		next.ServeHTTP(w, r)
 	})
+}
+
+func speedTest(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("\n\n%+v, %+v\n\n", r.RequestURI, mux.Vars(r))
+
+	category := mux.Vars(r)["category"]
+	if category == "request" {
+		speedtest.Test_Client_Speed(w, r)
+	} else if category == "response" {
+		var resBody []byte
+		r.Body.Read(resBody)
+
+		fmt.Printf("%+v", resBody)
+	}
 }
