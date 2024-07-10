@@ -131,11 +131,19 @@ func speedTest(w http.ResponseWriter, r *http.Request) {
 
 	category := mux.Vars(r)["category"]
 	if category == "request" {
-		speedtest.Test_Client_Speed(w, r)
-	} else if category == "response" {
-		var resBody []byte
-		r.Body.Read(resBody)
+		err := speedtest.Test_Client_Speed(w, r)
+		if err != nil {
+			fmt.Println("Error: ", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 
-		fmt.Printf("%+v", resBody)
+	} else if category == "response" && r.Method == "POST" {
+		networkSpeedClient, err := speedtest.Get_Client_Speed(r.Body)
+		if err != nil {
+			fmt.Println("Error: ", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		finalNetworkSpeedInMBs := 1000 / networkSpeedClient.Time
+		fmt.Printf("%+v, %+v MB/s", networkSpeedClient, finalNetworkSpeedInMBs)
 	}
 }
