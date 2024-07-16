@@ -8,14 +8,20 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/ShabarishRamaswamy/GoSeek/structs"
 )
+
+type ServeCustom struct {
+	structs.HTTPWebserver
+}
 
 // NOTE: This is essentially a mirror of the default golang implementation.
 
 // TODOS;
 // Errors when reading files.
 // Errors when parsing ranges. [File Sizes, If Ranges are not correctly formatted, If no range is present].
-func ServeCustom(w http.ResponseWriter, r *http.Request) {
+func ServeCustomHandler(w http.ResponseWriter, r *http.Request) {
 	wd, _ := os.Getwd()
 	fmt.Printf("Got the Request %+v\n", r)
 	filePath := filepath.Join(wd, "assets", "BBB-Test-Video.mp4")
