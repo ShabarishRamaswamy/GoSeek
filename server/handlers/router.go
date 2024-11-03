@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"path/filepath"
 	"text/template"
@@ -28,7 +27,7 @@ func GetNewRouter(ws structs.HTTPWebserver) *Router {
 }
 
 func (router Router) InitializeAllRoutes() *mux.Router {
-	fmt.Println("Initializing Routers")
+	// fmt.Println("Initializing Routers")
 	r := mux.NewRouter()
 	r.HandleFunc("/", router.indexPage)
 	r.HandleFunc("/speedTest/{category}", speedTest.SpeedTest)
