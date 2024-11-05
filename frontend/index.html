@@ -1,19 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Go Seek</title>
-    <script src="/assets/index.js" defer></script>
+    <title>GoSeek</title>
+    <script src="htmx/htmx.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 
-<body>
-    <h1>Welcome to GoSeek</h1>
-    <p>Here are the various Implementations</p>
+<body class="bg-gray-100 text-gray-800 font-sans">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <nav class="bg-white w-64 p-6 border-r">
+            <h1 class="text-2xl font-bold mb-6 text-blue-600">GoSeek</h1>
+            <p class="mb-4 text-gray-600">Select an implementation:</p>
+            <ul class="space-y-4">
+                <li><a href="/default" hx-target="#content" class="block text-lg text-blue-500 hover:text-blue-700">Default</a></li>
+                <li><a href="/custom" hx-target="#content" class="block text-lg text-blue-500 hover:text-blue-700">Custom Without Seek Bar</a></li>
+                <li><a href="/http-live-streaming" hx-get="frontend/hls/hls.html" hx-target="#content" class="block text-lg text-blue-500 hover:text-blue-700">HTTP Live Streaming</a></li>
+                <li><a href="/dash" hx-get="frontend/dash/dash.html" hx-target="#content" class="block text-lg text-blue-500 hover:text-blue-700">DASH</a></li>
+            </ul>
+        </nav>
 
-    <a href="/default">Default</a><br><br>
-    <a href="/custom">Custom Without Seek Bar</a>
+        <!-- Content Area -->
+        <div class="flex-1 p-10">
+            <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">Welcome to GoSeek</h2>
+                <p class="mb-6 text-gray-600">Choose an implementation from the sidebar to get started.</p>
+                <div id="content" class="mt-6">
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
-
 </html>

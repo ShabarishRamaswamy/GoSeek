@@ -21,6 +21,7 @@ A video streaming application written in Golang, HTMX.
 1. DASH: https://en.wikipedia.org/wiki/Dynamic_Adaptive_Streaming_over_HTTP
 1. Dash.JS: https://reference.dashif.org/dash.js/latest/samples/#GettingStarted
 1. HLS.JS: https://github.com/video-dev/hls.js/
+1. https://img.ly/blog/how-to-stream-videos-using-javascript-and-html5/
 1. Drawling Tool: https://excalidraw.com/
 
 # Future Scope:
