@@ -33,6 +33,7 @@ func (router Router) InitializeAllRoutes() *mux.Router {
 	r.HandleFunc("/speedTest/{category}", speedTest.SpeedTest)
 	r.HandleFunc("/default", router.defaultImplementation)
 	r.HandleFunc("/custom", router.customImeplementation)
+	r.HandleFunc("/http-live-streaming", router.hls)
 	r.PathPrefix("/serve/").HandlerFunc(custom.ServeCustomHandler)
 
 	// r.Use(utils.LoggingMiddleware)
@@ -59,6 +60,9 @@ func (router Router) customImeplementation(w http.ResponseWriter, r *http.Reques
 	template.Must(template.ParseFiles(customImplementationPath)).Execute(w, vp)
 }
 
-func (router Router) customNaive(w http.ResponseWriter, r *http.Request) {
+func (router Router) hls(w http.ResponseWriter, r *http.Request) {
+	vp := VideoPath{VideoPath: "/assets/HLS_Video/BBB.m3u8", ImgPath: "/assets/linux-test-img.png"}
+	customImplementationPath := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "hls", "hls.html")
 
+	template.Must(template.ParseFiles(customImplementationPath)).Execute(w, vp)
 }

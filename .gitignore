@@ -21,3 +21,6 @@
 go.work
 go.work.sum
 .DS_Store
+
+# Ignore HLS files
+assets/HLS_Video/*

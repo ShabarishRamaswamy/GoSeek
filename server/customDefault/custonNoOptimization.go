@@ -39,7 +39,9 @@ func ServeCustomHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("ERROR: ", err.Error())
 	}
 
-	// fmt.Printf("\nRange headers: %+v\n", r.Header["Range"])
+	fmt.Printf("Video File Properties: %+v\n", videoFileProperties)
+
+	fmt.Printf("\nRange headers: %+v\n", r.Header["Range"])
 	requestRangeUnprocessed := r.Header["Range"]
 	var reqRange []string
 	var vidSeekStart, vidSeekEnd int
@@ -64,7 +66,7 @@ func ServeCustomHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Range", fmt.Sprintf("bytes %d-%d/%d", vidSeekStart, vidSeekEnd, videoFileProperties.Size()))
 	w.Header().Add("Content-Length", fmt.Sprintf("%d", vidSeekSize))
-	w.Header().Add("Content-Type", "video/mp4")
+	w.Header().Add("Content-Type", "video/ogg")
 	w.Header().Add("Last-Modified", videoFileProperties.ModTime().UTC().Format(http.TimeFormat))
 	w.Header().Add("Accept-Ranges", "bytes")
 	w.WriteHeader(http.StatusPartialContent)
