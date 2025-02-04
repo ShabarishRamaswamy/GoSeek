@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"text/template"
@@ -27,9 +28,13 @@ func GetNewRouter(ws structs.HTTPWebserver) *Router {
 }
 
 func (router Router) InitializeAllRoutes() *mux.Router {
-	// fmt.Println("Initializing Routers")
 	r := mux.NewRouter()
 	r.HandleFunc("/", router.indexPage)
+	r.HandleFunc("/login", router.register)
+	r.HandleFunc("/signup", router.register)
+	r.HandleFunc("/register", router.register)
+
+	// Streaming
 	r.HandleFunc("/speedTest/{category}", speedTest.SpeedTest)
 	r.HandleFunc("/default", router.defaultImplementation)
 	r.HandleFunc("/custom", router.customImeplementation)
@@ -43,8 +48,25 @@ func (router Router) InitializeAllRoutes() *mux.Router {
 }
 
 func (router Router) indexPage(w http.ResponseWriter, r *http.Request) {
+	// If not logged in
 	indexFilePath := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "index.html")
 	template.Must(template.ParseFiles(indexFilePath)).Execute(w, nil)
+
+	// If Logged in:
+	// Home Page with uploaded videos.
+}
+
+func (router Router) register(w http.ResponseWriter, r *http.Request) {
+	if r.RequestURI == "/login" {
+		loginT := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "register", "login.html")
+		template.Must(template.ParseFiles(loginT)).Execute(w, nil)
+	} else if r.RequestURI == "/signup" {
+		signupT := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "register", "signup.html")
+		template.Must(template.ParseFiles(signupT)).Execute(w, nil)
+	} else if r.RequestURI == "/register" && r.Method == http.MethodPost {
+		r.ParseForm()
+		fmt.Printf("%+v", r.Form)
+	}
 }
 
 func (router Router) defaultImplementation(w http.ResponseWriter, r *http.Request) {

@@ -11,6 +11,8 @@ import (
 	"github.com/ShabarishRamaswamy/GoSeek/structs"
 )
 
+var PORT int = 8000
+
 func main() {
 	wd, _ := os.Getwd()
 	ctx := context.Background()
@@ -19,6 +21,8 @@ func main() {
 	httpWebserver := structs.GetHTTPWebserver(ctx, wd)
 	routers := router.GetNewRouter(*httpWebserver)
 
+	fmt.Println("Listening on Port: ", PORT)
+
 	r := routers.InitializeAllRoutes()
-	http.ListenAndServe("localhost:8000", r)
+	http.ListenAndServe(fmt.Sprintf("localhost:%d", PORT), r)
 }
