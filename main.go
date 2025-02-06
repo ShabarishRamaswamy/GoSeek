@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,7 +20,10 @@ func main() {
 	ctx := context.Background()
 	fmt.Println("Serving Static files from: ", filepath.Join(wd, "assets"))
 
-	db := db.Setup()
+	db := db.Setup(wd)
+	if db == nil {
+		log.Fatal(db)
+	}
 	defer db.Close()
 	fmt.Println("Database connected successfully")
 

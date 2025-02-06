@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
 	"text/template"
@@ -67,7 +68,11 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 	} else if r.RequestURI == "/register" && r.Method == http.MethodPost {
 		r.ParseForm()
 		fmt.Printf("%+v", r.Form)
-		db.RunQueries(router.Webserver.DB)
+
+		err := db.SaveUser(router.Webserver.DB, r.Form["name"][0], r.Form["email"][0], r.Form["password"][0])
+		if err != nil {
+			log.Fatalf("Error %s", err.Error())
+		}
 	}
 }
 
