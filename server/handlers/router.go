@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	custom "github.com/ShabarishRamaswamy/GoSeek/server/customDefault"
+	"github.com/ShabarishRamaswamy/GoSeek/server/db"
 	"github.com/ShabarishRamaswamy/GoSeek/server/speedTest"
 	"github.com/ShabarishRamaswamy/GoSeek/structs"
 	"github.com/gorilla/mux"
@@ -66,6 +67,7 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 	} else if r.RequestURI == "/register" && r.Method == http.MethodPost {
 		r.ParseForm()
 		fmt.Printf("%+v", r.Form)
+		db.RunQueries(router.Webserver.DB)
 	}
 }
 

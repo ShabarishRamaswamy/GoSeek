@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ShabarishRamaswamy/GoSeek/server/db"
 	router "github.com/ShabarishRamaswamy/GoSeek/server/handlers"
 	"github.com/ShabarishRamaswamy/GoSeek/structs"
 )
@@ -18,7 +19,11 @@ func main() {
 	ctx := context.Background()
 	fmt.Println("Serving Static files from: ", filepath.Join(wd, "assets"))
 
-	httpWebserver := structs.GetHTTPWebserver(ctx, wd)
+	db := db.Setup()
+	defer db.Close()
+	fmt.Println("Database connected successfully")
+
+	httpWebserver := structs.GetHTTPWebserver(ctx, wd, db)
 	routers := router.GetNewRouter(*httpWebserver)
 
 	fmt.Println("Listening on Port: ", PORT)
