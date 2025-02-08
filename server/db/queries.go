@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"path/filepath"
@@ -10,10 +11,9 @@ import (
 )
 
 const DB_NAME string = "db"
-const CREATE_DB string = `CREATE TABLE IF NOT EXISTS users (username text not null primary key, email text, password text);`
+const CREATE_DB string = `CREATE TABLE IF NOT EXISTS users (username text not null, email text not null primary key, password text not null);`
 
 func Setup(wd string) *sql.DB {
-	// fmt.Println(wd, "server", "db", DB_NAME, ".db", filepath.Join(wd, "server", "db", DB_NAME+".db"))
 	db, err := sql.Open("sqlite3", filepath.Join(wd, "server", "db", DB_NAME+".db"))
 	if err != nil {
 		log.Fatal(err)
@@ -29,19 +29,22 @@ func Setup(wd string) *sql.DB {
 }
 
 func SaveUser(db *sql.DB, username, email, password string) error {
-	saveQ := `insert into users(username, email, password) values(?, ?, ?)`
+	if username == "" || email == "" || password == "" {
+		return errors.New("inputs cannot be empty")
+	}
+
+	saveQ := `INSERT INTO users(username, email, password) VALUES(?, ?, ?)`
 	_, err := db.Prepare(saveQ)
 	if err != nil {
 		log.Printf("%q: %s\n", err, saveQ)
 		return err
 	}
+
 	_, err = db.Exec(saveQ, username, email, password)
 	if err != nil {
 		log.Printf("%q: %s\n", err, saveQ)
 		return err
 	}
-
-	fmt.Println("Saved into DB")
 
 	rows, err := db.Query("select * from users")
 	if err != nil {
@@ -62,6 +65,27 @@ func SaveUser(db *sql.DB, username, email, password string) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	return nil
+}
+
+func FindUser(db *sql.DB, email, password string) error {
+	if email == "" || password == "" {
+		return errors.New("cannot have empty fields")
+	}
+
+	findQ := "SELECT * from users WHERE email = ? AND password = ?"
+	statement, err := db.Prepare(findQ)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	var usernameDB, emailDB, passwordDB string
+	err = statement.QueryRow(email, password).Scan(&usernameDB, &emailDB, &passwordDB)
+	if err != nil {
+		return err
+	}
+	fmt.Println(emailDB, usernameDB, passwordDB)
 	return nil
 }
 

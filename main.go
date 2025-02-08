@@ -22,7 +22,7 @@ func main() {
 
 	db := db.Setup(wd)
 	if db == nil {
-		log.Fatal(db)
+		log.Fatal("Failed to Setup the DB: ", db)
 	}
 	defer db.Close()
 	fmt.Println("Database connected successfully")

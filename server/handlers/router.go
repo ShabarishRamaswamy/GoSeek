@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 	custom "github.com/ShabarishRamaswamy/GoSeek/server/customDefault"
 	"github.com/ShabarishRamaswamy/GoSeek/server/db"
 	"github.com/ShabarishRamaswamy/GoSeek/server/speedTest"
+	"github.com/ShabarishRamaswamy/GoSeek/server/utils"
 	"github.com/ShabarishRamaswamy/GoSeek/structs"
 	"github.com/gorilla/mux"
 )
@@ -59,19 +59,25 @@ func (router Router) indexPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router Router) register(w http.ResponseWriter, r *http.Request) {
-	if r.RequestURI == "/login" {
-		loginT := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "register", "login.html")
-		template.Must(template.ParseFiles(loginT)).Execute(w, nil)
+	if r.RequestURI == "/login" && r.Method == http.MethodGet {
+		utils.ServeWebpage(router.Webserver.BaseWorkingDir, "frontend", "register", "login.html").Execute(w, nil)
 	} else if r.RequestURI == "/signup" {
-		signupT := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "register", "signup.html")
-		template.Must(template.ParseFiles(signupT)).Execute(w, nil)
+		utils.ServeWebpage(router.Webserver.BaseWorkingDir, "frontend", "register", "signup.html").Execute(w, nil)
 	} else if r.RequestURI == "/register" && r.Method == http.MethodPost {
-		r.ParseForm()
-		fmt.Printf("%+v", r.Form)
+		formContents := utils.ParseForm(r)
 
-		err := db.SaveUser(router.Webserver.DB, r.Form["name"][0], r.Form["email"][0], r.Form["password"][0])
+		err := db.SaveUser(router.Webserver.DB, formContents["username"], formContents["email"], formContents["password"])
 		if err != nil {
-			log.Fatalf("Error %s", err.Error())
+			log.Printf("Error %s", err.Error())
+			w.Write([]byte("Sorry not allowed"))
+		}
+	} else if r.RequestURI == "/login" && r.Method == http.MethodPost {
+		formContents := utils.ParseForm(r)
+
+		err := db.FindUser(router.Webserver.DB, formContents["email"], formContents["password"])
+		if err != nil {
+			log.Println("Error with login: ", err.Error())
+			w.Write([]byte("Sorry not allowed"))
 		}
 	}
 }
