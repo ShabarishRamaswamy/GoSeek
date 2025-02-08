@@ -24,3 +24,6 @@ go.work.sum
 
 # Ignore HLS files
 assets/*_Video/*
+
+# SQLite DB
+*.db
