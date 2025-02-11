@@ -1,10 +1,13 @@
 package router
 
 import (
+	"crypto/subtle"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	custom "github.com/ShabarishRamaswamy/GoSeek/server/customDefault"
@@ -68,10 +71,23 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 	} else if r.RequestURI == "/register" && r.Method == http.MethodPost {
 		formContents := utils.ParseForm(r)
 
-		key := argon2.IDKey([]byte("some password"), router.Webserver.Env.SALT, 1, 64*1024, 4, 32)
-		fmt.Println("Key: ", key, "String: ", string(key))
+		// Ref: https://www.alexedwards.net/blog/how-to-hash-and-verify-passwords-with-argon2-in-go
+		salt := utils.GenerateRandomBytes(16)
+		if len(salt) == 0 {
+			log.Println("Internal server error: Salt is empty")
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 
-		err := db.SaveUser(router.Webserver.DB, formContents["username"], formContents["email"], formContents["password"])
+		hash := argon2.IDKey([]byte(formContents["password"]), salt, 1, 64*1024, 4, 32)
+		fmt.Println("Key: ", hash, "String: ", string(hash))
+
+		b64Salt := base64.RawStdEncoding.EncodeToString(salt)
+		b64Hash := base64.RawStdEncoding.EncodeToString(hash)
+
+		encodedHash := fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", 1, 64*1024, 4, 32, b64Salt, b64Hash)
+		fmt.Println(encodedHash)
+
+		err := db.SaveUser(router.Webserver.DB, formContents["username"], formContents["email"], encodedHash)
 		if err != nil {
 			log.Printf("Error %s", err.Error())
 			w.Write([]byte("Sorry not allowed"))
@@ -79,9 +95,33 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 	} else if r.RequestURI == "/login" && r.Method == http.MethodPost {
 		formContents := utils.ParseForm(r)
 
-		err := db.FindUser(router.Webserver.DB, formContents["email"], formContents["password"])
+		user, err := db.FindUser(router.Webserver.DB, formContents["email"])
 		if err != nil {
 			log.Println("Error with login: ", err.Error())
+			w.Write([]byte("Sorry not allowed"))
+		}
+
+		pwd := strings.Split(user.Password, "$")
+		saltDB, err := base64.RawStdEncoding.Strict().DecodeString(pwd[len(pwd)-2])
+		if err != nil {
+			log.Println("Internal server error: Salt is empty")
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		fmt.Println("Password Form:", formContents["password"])
+		hashCur := argon2.IDKey([]byte(formContents["password"]), saltDB, 1, 64*1024, 4, 32)
+
+		hashDB, err := base64.RawStdEncoding.DecodeString(pwd[len(pwd)-1])
+		if err != nil {
+			log.Println("Internal server error: Salt is empty")
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		if subtle.ConstantTimeCompare(hashDB, hashCur) == 1 {
+			log.Println("Logged in!")
+			w.WriteHeader(http.StatusAccepted)
+		} else {
+			log.Println("It's the wrong number")
 			w.Write([]byte("Sorry not allowed"))
 		}
 	}

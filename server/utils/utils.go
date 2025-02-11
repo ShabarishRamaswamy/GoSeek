@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,4 +49,17 @@ func ParseForm(r *http.Request) map[string]string {
 func ServeWebpage(path ...string) *template.Template {
 	finalPath := filepath.Join(path...)
 	return template.Must(template.ParseFiles(finalPath))
+}
+
+func GenerateRandomBytes(n uint8) []byte {
+	if n == 0 {
+		n = 16
+	}
+
+	token := make([]byte, n)
+	_, err := rand.Reader.Read(token)
+	if err != nil {
+		return []byte("")
+	}
+	return token
 }
