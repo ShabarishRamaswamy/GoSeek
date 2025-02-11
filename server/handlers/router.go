@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"github.com/ShabarishRamaswamy/GoSeek/server/utils"
 	"github.com/ShabarishRamaswamy/GoSeek/structs"
 	"github.com/gorilla/mux"
+	"golang.org/x/crypto/argon2"
 )
 
 type VideoPath struct {
@@ -65,6 +67,9 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 		utils.ServeWebpage(router.Webserver.BaseWorkingDir, "frontend", "register", "signup.html").Execute(w, nil)
 	} else if r.RequestURI == "/register" && r.Method == http.MethodPost {
 		formContents := utils.ParseForm(r)
+
+		key := argon2.IDKey([]byte("some password"), router.Webserver.Env.SALT, 1, 64*1024, 4, 32)
+		fmt.Println("Key: ", key, "String: ", string(key))
 
 		err := db.SaveUser(router.Webserver.DB, formContents["username"], formContents["email"], formContents["password"])
 		if err != nil {

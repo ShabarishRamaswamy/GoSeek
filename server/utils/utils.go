@@ -1,11 +1,30 @@
 package utils
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
 	"path/filepath"
+
+	"github.com/ShabarishRamaswamy/GoSeek/structs"
 )
+
+func SetupEnv(BaseWorkingDir string) (structs.Env, error) {
+	envContents, err := os.ReadFile(filepath.Join(BaseWorkingDir, ".env"))
+	if err != nil {
+		return structs.Env{}, err
+	}
+	var envStruct structs.Env
+	json.Unmarshal(envContents, &envStruct)
+	// fmt.Printf("%+v", envStruct)
+	if len(envStruct.SALT) == 0 {
+		return structs.Env{}, errors.New("SALT cannot be empty")
+	}
+	return envStruct, nil
+}
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
