@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"path/filepath"
 
+	"github.com/ShabarishRamaswamy/GoSeek/structs"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -14,7 +14,7 @@ const DB_NAME string = "db"
 const CREATE_DB string = `CREATE TABLE IF NOT EXISTS users (username text not null, email text not null primary key, password text not null);`
 
 func Setup(wd string) *sql.DB {
-	db, err := sql.Open("sqlite3", filepath.Join(wd, "server", "db", DB_NAME+".db"))
+	db, err := sql.Open("sqlite3", wd)
 	if err != nil {
 		log.Fatal(err)
 		return nil
@@ -68,25 +68,30 @@ func SaveUser(db *sql.DB, username, email, password string) error {
 	return nil
 }
 
-func FindUser(db *sql.DB, email, password string) error {
-	if email == "" || password == "" {
-		return errors.New("cannot have empty fields")
+func FindUser(db *sql.DB, email string) (structs.User, error) {
+	if email == "" {
+		return structs.User{}, errors.New("cannot have empty fields")
 	}
 
-	findQ := "SELECT * from users WHERE email = ? AND password = ?"
+	findQ := "SELECT * from users WHERE email = ?"
 	statement, err := db.Prepare(findQ)
 	if err != nil {
-		return err
+		return structs.User{}, err
 	}
 	defer statement.Close()
 
 	var usernameDB, emailDB, passwordDB string
-	err = statement.QueryRow(email, password).Scan(&usernameDB, &emailDB, &passwordDB)
+	err = statement.QueryRow(email).Scan(&usernameDB, &emailDB, &passwordDB)
 	if err != nil {
-		return err
+		return structs.User{}, err
 	}
-	fmt.Println(emailDB, usernameDB, passwordDB)
-	return nil
+	var User structs.User
+	User.Email = emailDB
+	User.Password = passwordDB
+	User.Name = usernameDB
+
+	// fmt.Println(emailDB, usernameDB, passwordDB)
+	return User, nil
 }
 
 func RunQueries(db *sql.DB) {
