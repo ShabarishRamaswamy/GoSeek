@@ -76,21 +76,21 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 		if len(salt) == 0 {
 			log.Println("Internal server error: Salt is empty")
 			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		hash := argon2.IDKey([]byte(formContents["password"]), salt, 1, 64*1024, 4, 32)
-		fmt.Println("Key: ", hash, "String: ", string(hash))
 
 		b64Salt := base64.RawStdEncoding.EncodeToString(salt)
 		b64Hash := base64.RawStdEncoding.EncodeToString(hash)
 
 		encodedHash := fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", 1, 64*1024, 4, 32, b64Salt, b64Hash)
-		fmt.Println(encodedHash)
 
 		err := db.SaveUser(router.Webserver.DB, formContents["username"], formContents["email"], encodedHash)
 		if err != nil {
 			log.Printf("Error %s", err.Error())
 			w.Write([]byte("Sorry not allowed"))
+			return
 		}
 	} else if r.RequestURI == "/login" && r.Method == http.MethodPost {
 		formContents := utils.ParseForm(r)
@@ -126,7 +126,8 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusAccepted)
 			return
 		} else {
-			log.Println("It's the wrong number")
+			log.Println("Incorrect password. Malicous user detected")
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Sorry not allowed"))
 			return
 		}
