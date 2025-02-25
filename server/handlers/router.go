@@ -68,7 +68,7 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 		utils.ServeWebpage(router.Webserver.BaseWorkingDir, "frontend", "register", "login.html").Execute(w, nil)
 	} else if r.RequestURI == "/signup" {
 		utils.ServeWebpage(router.Webserver.BaseWorkingDir, "frontend", "register", "signup.html").Execute(w, nil)
-	} else if r.RequestURI == "/register" && r.Method == http.MethodPost {
+	} else if r.RequestURI == "/signup" && r.Method == http.MethodPost {
 		formContents := utils.ParseForm(r)
 
 		// Ref: https://www.alexedwards.net/blog/how-to-hash-and-verify-passwords-with-argon2-in-go
@@ -98,14 +98,17 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 		user, err := db.FindUser(router.Webserver.DB, formContents["email"])
 		if err != nil {
 			log.Println("Error with login: ", err.Error())
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Sorry not allowed"))
+			return
 		}
 
 		pwd := strings.Split(user.Password, "$")
 		saltDB, err := base64.RawStdEncoding.Strict().DecodeString(pwd[len(pwd)-2])
 		if err != nil {
-			log.Println("Internal server error: Salt is empty")
-			w.WriteHeader(http.StatusInternalServerError)
+			log.Println("User not found")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
 		}
 
 		fmt.Println("Password Form:", formContents["password"])
@@ -115,14 +118,17 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println("Internal server error: Salt is empty")
 			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		if subtle.ConstantTimeCompare(hashDB, hashCur) == 1 {
 			log.Println("Logged in!")
 			w.WriteHeader(http.StatusAccepted)
+			return
 		} else {
 			log.Println("It's the wrong number")
 			w.Write([]byte("Sorry not allowed"))
+			return
 		}
 	}
 }

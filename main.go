@@ -15,12 +15,18 @@ import (
 
 var PORT int = 8000
 
+const DB_NAME string = "db"
+
 func main() {
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal("Failed to get working dir: ", err.Error())
+	}
+
 	ctx := context.Background()
 	fmt.Println("Serving Static files from: ", filepath.Join(wd, "assets"))
 
-	db := db.Setup(wd)
+	db := db.Setup(filepath.Join(wd, "server", "db", DB_NAME+".db"))
 	if db == nil {
 		log.Fatal("Failed to Setup the DB: ", db)
 	}

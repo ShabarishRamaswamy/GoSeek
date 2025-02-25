@@ -5,3 +5,6 @@ type User struct {
 	Password string `json:"password"`
 	Email    string `json:"email"`
 }
+
+type Video struct {
+}

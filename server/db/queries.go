@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"path/filepath"
 
 	"github.com/ShabarishRamaswamy/GoSeek/structs"
 	_ "github.com/mattn/go-sqlite3"
@@ -15,7 +14,7 @@ const DB_NAME string = "db"
 const CREATE_DB string = `CREATE TABLE IF NOT EXISTS users (username text not null, email text not null primary key, password text not null);`
 
 func Setup(wd string) *sql.DB {
-	db, err := sql.Open("sqlite3", filepath.Join(wd, "server", "db", DB_NAME+".db"))
+	db, err := sql.Open("sqlite3", wd)
 	if err != nil {
 		log.Fatal(err)
 		return nil
