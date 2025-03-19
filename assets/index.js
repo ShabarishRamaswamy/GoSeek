@@ -2,6 +2,14 @@ window.addEventListener("load", async () => {
     console.log("Loaded !\n", "Doing speed test now !\n");
     speedTestTime = await doSpeedTest();
     speedTestPong(speedTestTime);
+
+    let req = new XMLHttpRequest();
+    req.open('GET', window.location.href, true);
+    req.send(null);
+    req.onload = function() {
+        let headers = req.getAllResponseHeaders().toLowerCase();
+        console.log("Response Headers:\n", headers);
+    };
 });
 
 async function doSpeedTest() {

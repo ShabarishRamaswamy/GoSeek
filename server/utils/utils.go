@@ -22,7 +22,6 @@ func SetupEnv(BaseWorkingDir string) (structs.Env, error) {
 	}
 	var envStruct structs.Env
 	json.Unmarshal(envContents, &envStruct)
-	// fmt.Printf("%+v", envStruct)
 	if len(envStruct.JWT_Secret_Key) == 0 {
 		return structs.Env{}, errors.New("JWT_Secret_Key cannot be empty")
 	}
