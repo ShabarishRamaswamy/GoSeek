@@ -55,12 +55,20 @@ func (router Router) InitializeAllRoutes() *mux.Router {
 }
 
 func (router Router) indexPage(w http.ResponseWriter, r *http.Request) {
-	// If not logged in
-	indexFilePath := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "index.html")
-	template.Must(template.ParseFiles(indexFilePath)).Execute(w, nil)
+	cookie, err := r.Cookie("Auth-Token")
+	if err != nil {
+		// If not logged in
+		indexFilePath := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "index.html")
+		template.Must(template.ParseFiles(indexFilePath)).Execute(w, nil)
+		return
+	}
+
+	fmt.Println("Cookie: ", cookie)
 
 	// If Logged in:
 	// Home Page with uploaded videos.
+	indexFilePath := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "index.html")
+	template.Must(template.ParseFiles(indexFilePath)).Execute(w, cookie)
 }
 
 func (router Router) register(w http.ResponseWriter, r *http.Request) {
@@ -134,8 +142,14 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Auth-Token", jwtToken)
+		authCookie := http.Cookie{
+			Name:     "Auth-Token",
+			Value:    jwtToken,
+			HttpOnly: true,
+			Secure:   true,
+		}
+
+		http.SetCookie(w, &authCookie)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
