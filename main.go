@@ -10,6 +10,7 @@ import (
 
 	"github.com/ShabarishRamaswamy/GoSeek/server/db"
 	router "github.com/ShabarishRamaswamy/GoSeek/server/handlers"
+	"github.com/ShabarishRamaswamy/GoSeek/server/utils"
 	"github.com/ShabarishRamaswamy/GoSeek/structs"
 )
 
@@ -23,6 +24,11 @@ func main() {
 		log.Fatal("Failed to get working dir: ", err.Error())
 	}
 
+	env, err := utils.SetupEnv(wd)
+	if err != nil {
+		log.Fatal("Failed to setup env: ", err.Error())
+	}
+
 	ctx := context.Background()
 	fmt.Println("Serving Static files from: ", filepath.Join(wd, "assets"))
 
@@ -33,7 +39,7 @@ func main() {
 	defer db.Close()
 	fmt.Println("Database connected successfully")
 
-	httpWebserver := structs.GetHTTPWebserver(ctx, wd, db)
+	httpWebserver := structs.GetHTTPWebserver(ctx, wd, db, env)
 	routers := router.GetNewRouter(*httpWebserver)
 
 	fmt.Println("Listening on Port: ", PORT)

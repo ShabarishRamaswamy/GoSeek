@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/ShabarishRamaswamy/GoSeek/structs"
+	"github.com/golang-jwt/jwt"
 )
 
 func SetupEnv(BaseWorkingDir string) (structs.Env, error) {
@@ -20,9 +22,8 @@ func SetupEnv(BaseWorkingDir string) (structs.Env, error) {
 	}
 	var envStruct structs.Env
 	json.Unmarshal(envContents, &envStruct)
-	// fmt.Printf("%+v", envStruct)
-	if len(envStruct.SALT) == 0 {
-		return structs.Env{}, errors.New("SALT cannot be empty")
+	if len(envStruct.JWT_Secret_Key) == 0 {
+		return structs.Env{}, errors.New("JWT_Secret_Key cannot be empty")
 	}
 	return envStruct, nil
 }
@@ -62,4 +63,33 @@ func GenerateRandomBytes(n uint8) []byte {
 		return []byte("")
 	}
 	return token
+}
+
+// https://medium.com/@cheickzida/golang-implementing-jwt-token-authentication-bba9bfd84d60
+func CreateJWT(email string, env structs.Env) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email": email,
+		"exp":   time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	tokenString, err := token.SignedString(env.JWT_Secret_Key)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+}
+
+func VerifyJWT(tokenString string, env structs.Env) error {
+	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+		return env.JWT_Secret_Key, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	if !token.Valid {
+		return fmt.Errorf("invalid token")
+	}
+
+	return nil
 }

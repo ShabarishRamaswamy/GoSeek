@@ -55,18 +55,26 @@ func (router Router) InitializeAllRoutes() *mux.Router {
 }
 
 func (router Router) indexPage(w http.ResponseWriter, r *http.Request) {
-	// If not logged in
-	indexFilePath := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "index.html")
-	template.Must(template.ParseFiles(indexFilePath)).Execute(w, nil)
+	cookie, err := r.Cookie("Auth-Token")
+	if err != nil {
+		// If not logged in
+		indexFilePath := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "index.html")
+		template.Must(template.ParseFiles(indexFilePath)).Execute(w, nil)
+		return
+	}
+
+	fmt.Println("Cookie: ", cookie)
 
 	// If Logged in:
 	// Home Page with uploaded videos.
+	indexFilePath := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "index.html")
+	template.Must(template.ParseFiles(indexFilePath)).Execute(w, cookie)
 }
 
 func (router Router) register(w http.ResponseWriter, r *http.Request) {
 	if r.RequestURI == "/login" && r.Method == http.MethodGet {
 		utils.ServeWebpage(router.Webserver.BaseWorkingDir, "frontend", "register", "login.html").Execute(w, nil)
-	} else if r.RequestURI == "/signup" {
+	} else if r.RequestURI == "/signup" && r.Method == http.MethodGet {
 		utils.ServeWebpage(router.Webserver.BaseWorkingDir, "frontend", "register", "signup.html").Execute(w, nil)
 	} else if r.RequestURI == "/signup" && r.Method == http.MethodPost {
 		formContents := utils.ParseForm(r)
@@ -92,14 +100,16 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("Sorry not allowed"))
 			return
 		}
+		log.Printf("User: %s saved successfully\n", formContents["username"])
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	} else if r.RequestURI == "/login" && r.Method == http.MethodPost {
 		formContents := utils.ParseForm(r)
 
 		user, err := db.FindUser(router.Webserver.DB, formContents["email"])
 		if err != nil {
 			log.Println("Error with login: ", err.Error())
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte("Sorry not allowed"))
+			// TODO: redirect /login?error=invalid_credentials
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
@@ -107,30 +117,40 @@ func (router Router) register(w http.ResponseWriter, r *http.Request) {
 		saltDB, err := base64.RawStdEncoding.Strict().DecodeString(pwd[len(pwd)-2])
 		if err != nil {
 			log.Println("User not found")
-			w.WriteHeader(http.StatusUnauthorized)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
-		fmt.Println("Password Form:", formContents["password"])
+		// fmt.Println("Password Form:", formContents["password"])
 		hashCur := argon2.IDKey([]byte(formContents["password"]), saltDB, 1, 64*1024, 4, 32)
 
 		hashDB, err := base64.RawStdEncoding.DecodeString(pwd[len(pwd)-1])
 		if err != nil {
 			log.Println("Internal server error: Salt is empty")
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
-		if subtle.ConstantTimeCompare(hashDB, hashCur) == 1 {
-			log.Println("Logged in!")
-			w.WriteHeader(http.StatusAccepted)
-			return
-		} else {
+		if subtle.ConstantTimeCompare(hashDB, hashCur) != 1 {
 			log.Println("Incorrect password. Malicous user detected")
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte("Sorry not allowed"))
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
+
+		jwtToken, err := utils.CreateJWT(formContents["email"], router.Webserver.Env)
+		if err != nil {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+		}
+
+		authCookie := http.Cookie{
+			Name:     "Auth-Token",
+			Value:    jwtToken,
+			HttpOnly: true,
+			Secure:   true,
+		}
+
+		http.SetCookie(w, &authCookie)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 

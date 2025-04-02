@@ -1,5 +1,5 @@
 package structs
 
 type Env struct {
-	SALT []byte `json:"SALT"`
+	JWT_Secret_Key []byte `json:"JWT_Secret_Key"`
 }
