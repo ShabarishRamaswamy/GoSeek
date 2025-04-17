@@ -63,12 +63,18 @@ func (router Router) indexPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Cookie: ", cookie)
+	// fmt.Println("Cookie: ", cookie)
+
+	data := struct {
+		Cookie string
+	}{
+		Cookie: fmt.Sprintf("%s-%s", cookie.Name, cookie.Value),
+	}
 
 	// If Logged in:
 	// Home Page with uploaded videos.
 	indexFilePath := filepath.Join(router.Webserver.BaseWorkingDir, "frontend", "index.html")
-	template.Must(template.ParseFiles(indexFilePath)).Execute(w, cookie)
+	template.Must(template.ParseFiles(indexFilePath)).Execute(w, data)
 }
 
 func (router Router) register(w http.ResponseWriter, r *http.Request) {
